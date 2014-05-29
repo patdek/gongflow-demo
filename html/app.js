@@ -9,7 +9,7 @@
 var app = angular.module('app', ['flow'])
 .config(['flowFactoryProvider', function (flowFactoryProvider) {
   flowFactoryProvider.defaults = {
-    target: 'upload/',
+    target: '/upload',
     permanentErrors: [404, 500, 501],
     maxChunkRetries: 1,
     chunkRetryInterval: 5000,

@@ -37,7 +37,14 @@ func main() {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Write(index)
 	})
-	http.HandleFunc("/upload", ngflow.UploadHandler)
+
+	// the actual demo, yey!
+	ngHandler, err := ngflow.UploadHandler("/tmp")
+	if err != nil {
+		log.Fatal("Unable to create upload handler")
+	}
+	http.HandleFunc("/upload", ngHandler)
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
