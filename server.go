@@ -3,13 +3,15 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/patdek/ngflow"
 )
 
 func main() {
 	// These assets are embedded into the executable using
 	// https://github.com/jteeuwen/go-bindata
 	// to generate bindata.go -- this removes the need to manage the path
-	// just to run the demo
+	// just to run the demo ... it should "just work"(TM)
 	angular, ng, bootstrap, app, index, glyphicons := mustLoadAssets()
 	http.HandleFunc("/angular.min.js", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/javascript")
@@ -35,7 +37,7 @@ func main() {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Write(index)
 	})
-	//http.HandleFunc("/upload", func(w http.ResponseWriter, r *http.Request) {  })
+	http.HandleFunc("/upload", ngflow.UploadHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
