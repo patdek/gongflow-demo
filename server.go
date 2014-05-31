@@ -39,7 +39,7 @@ func main() {
 	})
 
 	// the actual demo, yey!
-	ngHandler, err := ngflow.UploadHandler("/tmp")
+	ngHandler, err := ngflow.UploadHandler("/tmp", 10)
 	if err != nil {
 		log.Fatal("Unable to create upload handler")
 	}
