@@ -12,7 +12,23 @@ func main() {
 	// https://github.com/jteeuwen/go-bindata
 	// to generate bindata.go -- this removes the need to manage the path
 	// just to run the demo ... it should "just work"(TM)
+	listenAt := ":8080"
+	bindStaticAssets()
+
+	// the actual demo, yey!
+	gongHandler, err := gongflow.UploadHandler("/tmp/gongflow", 10)
+	if err != nil {
+		log.Fatal("Unable to create upload handler: ", err)
+	}
+	http.HandleFunc("/upload", gongHandler)
+
+	log.Println("Listening at:", listenAt)
+	log.Fatal(http.ListenAndServe(listenAt, nil))
+}
+
+func bindStaticAssets() {
 	angular, ng, bootstrap, app, index, glyphicons := mustLoadAssets()
+
 	http.HandleFunc("/angular.min.js", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/javascript")
 		w.Write(angular)
@@ -37,15 +53,6 @@ func main() {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Write(index)
 	})
-
-	// the actual demo, yey!
-	ngHandler, err := gongflow.UploadHandler("/tmp", 10)
-	if err != nil {
-		log.Fatal("Unable to create upload handler")
-	}
-	http.HandleFunc("/upload", ngHandler)
-
-	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func mustLoadAssets() ([]byte, []byte, []byte, []byte, []byte, []byte) {
