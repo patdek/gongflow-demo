@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/patdek/ngflow"
+	"github.com/patdek/gongflow"
 )
 
 func main() {
@@ -39,7 +39,7 @@ func main() {
 	})
 
 	// the actual demo, yey!
-	ngHandler, err := ngflow.UploadHandler("/tmp", 10)
+	ngHandler, err := gongflow.UploadHandler("/tmp", 10)
 	if err != nil {
 		log.Fatal("Unable to create upload handler")
 	}
