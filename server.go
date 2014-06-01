@@ -3,8 +3,14 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
+	"path"
 
 	"github.com/patdek/gongflow"
+)
+
+var (
+	tempPath = path.Join(os.TempDir(), "gongflow")
 )
 
 func main() {
@@ -16,18 +22,38 @@ func main() {
 	bindStaticAssets()
 
 	// the actual demo, yey!
-	gongHandler, err := gongflow.UploadHandler("/tmp/gongflow", 10, gotUpload)
-	if err != nil {
-		log.Fatal("Unable to create upload handler: ", err)
-	}
-	http.HandleFunc("/upload", gongHandler)
+	os.MkdirAll(tempPath, 0777)
+	http.HandleFunc("/upload", handleUpload)
 
 	log.Println("Listening at:", listenAt)
 	log.Fatal(http.ListenAndServe(listenAt, nil))
 }
 
-func gotUpload(filename string) {
-	log.Println("Successfully Uploaded:", filename)
+func handleUpload(w http.ResponseWriter, r *http.Request) {
+	fd, err := gongflow.ExtractFlowData(r)
+	if err != nil {
+		http.Error(w, "Unable to extract flow data: "+err.Error(), 500)
+	}
+
+	if r.Method == "GET" { // status request
+		msg, code := gongflow.CheckPart(tempPath, fd)
+		http.Error(w, msg, code)
+	} else if r.Method == "POST" { // upload part
+		msg, done, err := gongflow.UploadPart(tempPath, fd, r)
+		if err != nil {
+			http.Error(w, "WAT:"+err.Error(), 500)
+			return
+		}
+		if done {
+			http.Error(w, msg+" is done", 200)
+			return
+		}
+		http.Error(w, msg+" is continuing", 200)
+	} else { // bug
+		http.Error(w, "Bad Method", 500)
+		return
+	}
+
 }
 
 func bindStaticAssets() {
