@@ -16,7 +16,7 @@ func main() {
 	bindStaticAssets()
 
 	// the actual demo, yey!
-	gongHandler, err := gongflow.UploadHandler("/tmp/gongflow", 10)
+	gongHandler, err := gongflow.UploadHandler("/tmp/gongflow", 10, gotUpload)
 	if err != nil {
 		log.Fatal("Unable to create upload handler: ", err)
 	}
@@ -24,6 +24,10 @@ func main() {
 
 	log.Println("Listening at:", listenAt)
 	log.Fatal(http.ListenAndServe(listenAt, nil))
+}
+
+func gotUpload(filename string) {
+	log.Println("Successfully Uploaded:", filename)
 }
 
 func bindStaticAssets() {
