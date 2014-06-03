@@ -1,4 +1,5 @@
-// Package gongflow-demo provides an instant-on working demo of using the gongflow library
+// Package gongflow-demo provides an instant-on working demo of using the gongflow library.  See
+// http://godoc.org/github.com/patdek/gongflow for more information.
 package main
 
 import (
