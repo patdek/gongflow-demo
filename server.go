@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
 	"github.com/patdek/gongflow"
 )
@@ -21,16 +22,30 @@ func main() {
 	listenAt := ":8080"
 	bindStaticAssets()
 
-	// the actual demo, yey!
+	// ensure the tempPath exists
 	os.MkdirAll(tempPath, 0777)
+
+	// the actual demo, yey!
+	go cleanupUploads() // loop forever doing cleanup
 	http.HandleFunc("/upload", handleUpload)
 
 	log.Println("Listening at:", listenAt)
 	log.Fatal(http.ListenAndServe(listenAt, nil))
 }
 
+func cleanupUploads() {
+	timeDur := time.Duration(1) * time.Minute
+	t := time.NewTicker(timeDur)
+	for _ = range t.C {
+		err := gongflow.CleanupParts(tempPath, timeDur)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}
+
 func handleUpload(w http.ResponseWriter, r *http.Request) {
-	fd, err := gongflow.ExtractFlowData(r)
+	fd, err := gongflow.ExtractFlowData(r) // extract the data that all flow uploads have
 	if err != nil {
 		http.Error(w, "Unable to extract flow data: "+err.Error(), 500)
 	}
@@ -39,16 +54,16 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		msg, code := gongflow.CheckPart(tempPath, fd)
 		http.Error(w, msg, code)
 	} else if r.Method == "POST" { // upload part
-		msg, done, err := gongflow.UploadPart(tempPath, fd, r)
+		msg, err := gongflow.UploadPart(tempPath, fd, r)
 		if err != nil {
-			http.Error(w, "WAT:"+err.Error(), 500)
+			http.Error(w, "WAT: "+err.Error(), 500)
 			return
 		}
-		if done {
+		if msg != "" {
 			http.Error(w, msg+" is done", 200)
 			return
 		}
-		http.Error(w, msg+" is continuing", 200)
+		http.Error(w, "continuing", 200)
 	} else { // bug
 		http.Error(w, "Bad Method", 500)
 		return
