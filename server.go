@@ -35,8 +35,8 @@ func main() {
 // cleanupUploads is an example of how to write a loop to cleanup your temporary directory,
 // it is a lazy implementation.  You should pass in a channel to signal it to close.
 func cleanupUploads() {
-	loopDur := time.Duration(1) * time.Minute    // loop every minute
-	tooOldDur := time.Duration(15) * time.Minute // older than 15 minutes to be deleted
+	loopDur := time.Duration(1) * time.Minute   // loop every minute
+	tooOldDur := time.Duration(5) * time.Minute // older than 5 minutes to be deleted
 	t := time.NewTicker(loopDur)
 	// this will "tick" every loopDur forever.
 	for _ = range t.C {
@@ -66,8 +66,13 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if filePath != "" {
-			log.Println("Part Upload Done: " + filePath)
 			http.Error(w, filePath+" is done", 200)
+
+			// TODO: Add what you want to do with the file here, you want to get
+			// it out of the temporary directory before any cleanup code you might
+			// have written is run (like the clenaupUploads above
+			log.Println("Part Upload Done: " + filePath)
+
 			return
 		}
 		http.Error(w, "continuing to upload parts", 200)
