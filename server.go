@@ -1,3 +1,4 @@
+// Package gongflow-demo provides an instant-on working demo of using the gongflow library
 package main
 
 import (
@@ -14,64 +15,72 @@ var (
 	tempPath = path.Join(os.TempDir(), "gongflow")
 )
 
-func main() {
-	// These assets are embedded into the executable using
-	// https://github.com/jteeuwen/go-bindata
-	// to generate bindata.go -- this removes the need to manage the path
-	// just to run the demo ... it should "just work"(TM)
-	listenAt := ":8080"
-	bindStaticAssets()
-
+func init() {
 	// ensure the tempPath exists
 	os.MkdirAll(tempPath, 0777)
+}
+
+func main() {
+	listenAt := ":8080" // listen on all local addresses :8080
+	mapStaticAssets()
 
 	// the actual demo, yey!
 	go cleanupUploads() // loop forever doing cleanup
-	http.HandleFunc("/upload", handleUpload)
+	http.HandleFunc("/upload", uploadHandler)
 
 	log.Println("Listening at:", listenAt)
 	log.Fatal(http.ListenAndServe(listenAt, nil))
 }
 
+// cleanupUploads is an example of how to write a loop to cleanup your temporary directory,
+// it is a lazy implementation.  You should pass in a channel to signal it to close.
 func cleanupUploads() {
-	timeDur := time.Duration(1) * time.Minute
-	t := time.NewTicker(timeDur)
+	loopDur := time.Duration(1) * time.Minute    // loop every minute
+	tooOldDur := time.Duration(15) * time.Minute // older than 15 minutes to be deleted
+	t := time.NewTicker(loopDur)
+	// this will "tick" every loopDur forever.
 	for _ = range t.C {
-		err := gongflow.CleanupParts(tempPath, timeDur)
+		err := gongflow.PartsCleanup(tempPath, tooOldDur) // delete stuff in tempPath older than tooOldDur
 		if err != nil {
 			log.Println(err)
 		}
 	}
 }
 
-func handleUpload(w http.ResponseWriter, r *http.Request) {
-	fd, err := gongflow.ExtractFlowData(r) // extract the data that all flow uploads have
+// uploadHandler is an example of how to write a handler for the two type of requests ng-flow
+// will send.  It sends POST and GET requests.  POST to do the actual upload, GET to ask for
+// status on parts.  See the ng-flow docs for more information.
+func uploadHandler(w http.ResponseWriter, r *http.Request) {
+	ngFlowData, err := gongflow.PartFlowData(r)
 	if err != nil {
-		http.Error(w, "Unable to extract flow data: "+err.Error(), 500)
+		http.Error(w, "Unable to extract ngFlowData: "+err.Error(), 500)
 	}
 
-	if r.Method == "GET" { // status request
-		msg, code := gongflow.CheckPart(tempPath, fd)
+	if r.Method == "GET" { // ng-flow status request
+		msg, code := gongflow.PartStatus(tempPath, ngFlowData)
 		http.Error(w, msg, code)
-	} else if r.Method == "POST" { // upload part
-		msg, err := gongflow.UploadPart(tempPath, fd, r)
+	} else if r.Method == "POST" { // ng-flow upload part
+		filePath, err := gongflow.PartUpload(tempPath, ngFlowData, r)
 		if err != nil {
-			http.Error(w, "WAT: "+err.Error(), 500)
+			http.Error(w, "Part Upload Failure: "+err.Error(), 500)
 			return
 		}
-		if msg != "" {
-			http.Error(w, msg+" is done", 200)
+		if filePath != "" {
+			log.Println("Part Upload Done: " + filePath)
+			http.Error(w, filePath+" is done", 200)
 			return
 		}
-		http.Error(w, "continuing", 200)
-	} else { // bug
-		http.Error(w, "Bad Method", 500)
-		return
+		http.Error(w, "continuing to upload parts", 200)
 	}
-
 }
 
-func bindStaticAssets() {
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// below here is just busywork about serving static assets
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// mapStaticAssets maps the various endpoints needed for the demo excluding the
+// actual upload handler
+func mapStaticAssets() {
 	angular, ng, bootstrap, app, index, glyphicons := mustLoadAssets()
 
 	http.HandleFunc("/angular.min.js", func(w http.ResponseWriter, r *http.Request) {
@@ -100,6 +109,8 @@ func bindStaticAssets() {
 	})
 }
 
+// mustLoadAssets uses the bindata (see README.md) to load the assets so
+// it doesn't have to worry about puzzling out the path dynamically.
 func mustLoadAssets() ([]byte, []byte, []byte, []byte, []byte, []byte) {
 	angular, err := Asset("html/angular.min.js")
 	if err != nil {
