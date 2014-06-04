@@ -36,7 +36,10 @@ func main() {
 }
 
 // cleanupUploads is an example of how to write a loop to cleanup your temporary directory,
-// it is a lazy implementation.  You should pass in a channel to signal it to close.
+// it is a lazy implementation. You should pass in a channel to signal it to close.
+// gongflow drops uploaded file chunks into a temporary directory which are eventually
+// used to reconstitute a complete file. This temporary directory should be cleaned up
+// periodically.
 func cleanupUploads() {
 	loopDur := time.Duration(1) * time.Minute   // loop every minute
 	tooOldDur := time.Duration(5) * time.Minute // older than 5 minutes to be deleted
@@ -53,6 +56,7 @@ func cleanupUploads() {
 // uploadHandler is an example of how to write a handler for the two type of requests ng-flow
 // will send.  It sends POST and GET requests.  POST to do the actual upload, GET to ask for
 // status on chunks.  See the ng-flow docs for more information.
+>>>>>>> 4f0eb1fa519a4e32e5f9fa3bf1a2a6798bc7f8cc
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	ngFlowData, err := gongflow.ChunkFlowData(r)
 	if err != nil {
@@ -63,6 +67,9 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		msg, code := gongflow.ChunkStatus(tempPath, ngFlowData)
 		http.Error(w, msg, code)
 	} else if r.Method == "POST" { // ng-flow upload chunk
+        // When the upload is incomplete, ChunkUpload will return an empty string.
+        // When the upload is complete, ChunkUpload will return the path to the reconstituted file.
+        // So, you can just keep calling it until you get back the path to a file.
 		filePath, err := gongflow.ChunkUpload(tempPath, ngFlowData, r)
 		if err != nil {
 			http.Error(w, "Chunk Upload Failure: "+err.Error(), 500)
@@ -73,7 +80,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 			// TODO: Add what you want to do with the file here, you want to get
 			// it out of the temporary directory before any cleanup code you might
-			// have written is run (like the clenaupUploads above
+			// have written is run (like the cleanupUploads above)
 			log.Println("Chunk Upload Done: " + filePath)
 
 			return
