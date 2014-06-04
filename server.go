@@ -41,8 +41,8 @@ func main() {
 // used to reconstitute a complete file. This temporary directory should be cleaned up
 // periodically.
 func cleanupUploads() {
-	loopDur := time.Duration(1) * time.Minute   // loop every minute
-	tooOldDur := time.Duration(5) * time.Minute // older than 5 minutes to be deleted
+	loopDur := time.Duration(1) * time.Minute     // loop every minute
+	tooOldDur := time.Duration(100) * time.Minute // older than 5 minutes to be deleted
 	t := time.NewTicker(loopDur)
 	// this will "tick" every loopDur forever.
 	for _ = range t.C {
@@ -60,6 +60,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	ngFlowData, err := gongflow.ChunkFlowData(r)
 	if err != nil {
 		http.Error(w, "Unable to extract ngFlowData: "+err.Error(), 500)
+		return
 	}
 
 	if r.Method == "GET" { // ng-flow status request
