@@ -43,7 +43,7 @@ func cleanupUploads() {
 	t := time.NewTicker(loopDur)
 	// this will "tick" every loopDur forever.
 	for _ = range t.C {
-		err := gongflow.PartsCleanup(tempPath, tooOldDur) // delete stuff in tempPath older than tooOldDur
+		err := gongflow.ChunksCleanup(tempPath, tooOldDur) // delete stuff in tempPath older than tooOldDur
 		if err != nil {
 			log.Println(err)
 		}
@@ -52,20 +52,20 @@ func cleanupUploads() {
 
 // uploadHandler is an example of how to write a handler for the two type of requests ng-flow
 // will send.  It sends POST and GET requests.  POST to do the actual upload, GET to ask for
-// status on parts.  See the ng-flow docs for more information.
+// status on chunks.  See the ng-flow docs for more information.
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
-	ngFlowData, err := gongflow.PartFlowData(r)
+	ngFlowData, err := gongflow.ChunkFlowData(r)
 	if err != nil {
 		http.Error(w, "Unable to extract ngFlowData: "+err.Error(), 500)
 	}
 
 	if r.Method == "GET" { // ng-flow status request
-		msg, code := gongflow.PartStatus(tempPath, ngFlowData)
+		msg, code := gongflow.ChunkStatus(tempPath, ngFlowData)
 		http.Error(w, msg, code)
-	} else if r.Method == "POST" { // ng-flow upload part
-		filePath, err := gongflow.PartUpload(tempPath, ngFlowData, r)
+	} else if r.Method == "POST" { // ng-flow upload chunk
+		filePath, err := gongflow.ChunkUpload(tempPath, ngFlowData, r)
 		if err != nil {
-			http.Error(w, "Part Upload Failure: "+err.Error(), 500)
+			http.Error(w, "Chunk Upload Failure: "+err.Error(), 500)
 			return
 		}
 		if filePath != "" {
@@ -74,11 +74,11 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			// TODO: Add what you want to do with the file here, you want to get
 			// it out of the temporary directory before any cleanup code you might
 			// have written is run (like the clenaupUploads above
-			log.Println("Part Upload Done: " + filePath)
+			log.Println("Chunk Upload Done: " + filePath)
 
 			return
 		}
-		http.Error(w, "continuing to upload parts", 200)
+		http.Error(w, "continuing to upload chunks", 200)
 	}
 }
 
