@@ -1,5 +1,7 @@
 // Package gongflow-demo provides an instant-on working demo of using the gongflow library.  See
-// http://godoc.org/github.com/patdek/gongflow for more information.
+// http://godoc.org/github.com/patdek/gongflow for more information.  To get it up and running fast
+// just do a "go get github.com/patdek/gongflow-demo then run "gongflow-demo" and point your browser
+// to http://localhost:8080
 package main
 
 import (
