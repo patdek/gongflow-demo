@@ -56,7 +56,6 @@ func cleanupUploads() {
 // uploadHandler is an example of how to write a handler for the two type of requests ng-flow
 // will send.  It sends POST and GET requests.  POST to do the actual upload, GET to ask for
 // status on chunks.  See the ng-flow docs for more information.
->>>>>>> 4f0eb1fa519a4e32e5f9fa3bf1a2a6798bc7f8cc
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	ngFlowData, err := gongflow.ChunkFlowData(r)
 	if err != nil {
@@ -67,9 +66,9 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		msg, code := gongflow.ChunkStatus(tempPath, ngFlowData)
 		http.Error(w, msg, code)
 	} else if r.Method == "POST" { // ng-flow upload chunk
-        // When the upload is incomplete, ChunkUpload will return an empty string.
-        // When the upload is complete, ChunkUpload will return the path to the reconstituted file.
-        // So, you can just keep calling it until you get back the path to a file.
+		// When the upload is incomplete, ChunkUpload will return an empty string.
+		// When the upload is complete, ChunkUpload will return the path to the reconstituted file.
+		// So, you can just keep calling it until you get back the path to a file.
 		filePath, err := gongflow.ChunkUpload(tempPath, ngFlowData, r)
 		if err != nil {
 			http.Error(w, "Chunk Upload Failure: "+err.Error(), 500)
